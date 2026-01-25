@@ -1,7 +1,9 @@
+// src/App.jsx
 import Header from "./components/Header";
 import MainContent from "./components/MainContent";
 import Footer from "./components/Footer";
 import UserProfile from "./components/UserProfile";
+import Counter from "./components/Counter"; // <-- add this
 
 function App() {
   return (
@@ -9,6 +11,7 @@ function App() {
       <Header />
       <MainContent />
       <UserProfile name="Alice" age="25" bio="Loves hiking and photography" />
+      <Counter /> {/* <-- render the counter */}
       <Footer />
     </>
   );
