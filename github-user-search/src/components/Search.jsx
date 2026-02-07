@@ -2,248 +2,211 @@ import { useState } from "react";
 import { fetchUserData, fetchAdvancedUsers } from "../services/githubService";
 
 export default function Search() {
-  // Basic username search (Task 1)
   const [username, setUsername] = useState("");
-
-  // Advanced fields (Task 2)
+  const [keyword, setKeyword] = useState("");
   const [location, setLocation] = useState("");
   const [minRepos, setMinRepos] = useState("");
 
-  const [user, setUser] = useState(null); // basic search single user
-  const [users, setUsers] = useState([]); // advanced search list
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false);
+  const [user, setUser] = useState(null);
+  const [users, setUsers] = useState([]);
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState("");
 
-  const clearResults = () => {
-    setUser(null);
-    setUsers([]);
-    setPage(1);
-    setHasMore(false);
-  };
-
-  // --- BASIC SEARCH (optional to keep) ---
   const handleBasicSearch = async (e) => {
     e.preventDefault();
-    const trimmed = username.trim();
-    if (!trimmed) return;
-
-    clearResults();
-    setError(false);
     setLoading(true);
+    setError("");
+    setUser(null);
+    setUsers([]);
 
     try {
-      const data = await fetchUserData(trimmed);
+      const data = await fetchUserData(username.trim());
       setUser(data);
-    } catch {
-      setError(true);
+    } catch (err) {
+      setError("Looks like we cant find the user");
     } finally {
       setLoading(false);
     }
   };
 
-  // --- ADVANCED SEARCH ---
-  const handleAdvancedSearch = async (e) => {
-    e.preventDefault();
-
-    // allow searching even if username empty (location/repos only)
-    clearResults();
-    setError(false);
+  const handleAdvancedSearch = async () => {
     setLoading(true);
+    setError("");
+    setUser(null);
+    setUsers([]);
 
     try {
-      const result = await fetchAdvancedUsers({
-        username,
+      const results = await fetchAdvancedUsers({
+        username: keyword,
         location,
         minRepos,
-        page: 1,
-        perPage: 10,
       });
-
-      setUsers(result.users);
-      setHasMore(result.hasMore);
-      setPage(1);
-    } catch {
-      setError(true);
+      setUsers(results);
+    } catch (err) {
+      setError("Looks like we cant find the user");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLoadMore = async () => {
-    const nextPage = page + 1;
-    setLoading(true);
-    setError(false);
-
-    try {
-      const result = await fetchAdvancedUsers({
-        username,
-        location,
-        minRepos,
-        page: nextPage,
-        perPage: 10,
-      });
-
-      setUsers((prev) => [...prev, ...result.users]);
-      setHasMore(result.hasMore);
-      setPage(nextPage);
-    } catch {
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
+  const handleClear = () => {
+    setUsername("");
+    setKeyword("");
+    setLocation("");
+    setMinRepos("");
+    setUser(null);
+    setUsers([]);
+    setError("");
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-4">
-      <div className="bg-white shadow rounded-xl p-4 border">
-        <h2 className="text-xl font-semibold mb-3">GitHub User Search</h2>
-
-        {/* BASIC SEARCH (Task 1) */}
-        <form onSubmit={handleBasicSearch} className="flex gap-2 mb-4">
-          <input
-            className="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring"
-            type="text"
-            placeholder="Search by exact username (e.g. octocat)"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-          <button
-            className="px-4 py-2 rounded-lg bg-black text-white hover:opacity-90"
-            type="submit"
-          >
-            Search
-          </button>
-        </form>
-
-        {/* ADVANCED SEARCH (Task 2) */}
-        <form onSubmit={handleAdvancedSearch} className="grid gap-3 md:grid-cols-3">
-          <input
-            className="border rounded-lg px-3 py-2 focus:outline-none focus:ring"
-            type="text"
-            placeholder="Keyword (login/name)"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-
-          <input
-            className="border rounded-lg px-3 py-2 focus:outline-none focus:ring"
-            type="text"
-            placeholder="Location (e.g. Lomé)"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-          />
-
-          <input
-            className="border rounded-lg px-3 py-2 focus:outline-none focus:ring"
-            type="number"
-            min="0"
-            placeholder="Min repos (e.g. 10)"
-            value={minRepos}
-            onChange={(e) => setMinRepos(e.target.value)}
-          />
-
-          <div className="md:col-span-3 flex gap-2">
-            <button
-              className="flex-1 px-4 py-2 rounded-lg bg-blue-600 text-white hover:opacity-90"
-              type="submit"
-            >
-              Advanced Search
-            </button>
-            <button
-              type="button"
-              className="px-4 py-2 rounded-lg border hover:bg-gray-50"
-              onClick={() => {
-                setUsername("");
-                setLocation("");
-                setMinRepos("");
-                clearResults();
-                setError(false);
-              }}
-            >
-              Clear
+    <section className="card p-5 sm:p-6">
+      {/* Basic Search */}
+      <form onSubmit={handleBasicSearch} className="space-y-3">
+        <div className="grid gap-2">
+          <label className="label">Search by exact username</label>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              className="input"
+              type="text"
+              placeholder="e.g. octocat"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+            <button className="btn-primary sm:w-36" type="submit">
+              Search
             </button>
           </div>
-        </form>
+        </div>
+      </form>
 
-        {/* Status */}
-        <div className="mt-4">
-          {loading && <p className="text-gray-600">Loading...</p>}
-          {error && !loading && (
-            <p className="text-red-600">Looks like we can't find the user</p>
-          )}
+      {/* Divider */}
+      <div className="my-5 border-t border-slate-200" />
+
+      {/* Advanced Search */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold">Advanced Search</h2>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-2">
+            <label className="label">Keyword (login/name)</label>
+            <input
+              className="input"
+              type="text"
+              placeholder="e.g. mayo"
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <label className="label">Location</label>
+            <input
+              className="input"
+              type="text"
+              placeholder="e.g. Lomé"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <label className="label">Min repos</label>
+            <input
+              className="input"
+              type="number"
+              min="0"
+              placeholder="e.g. 10"
+              value={minRepos}
+              onChange={(e) => setMinRepos(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <button className="btn-secondary" type="button" onClick={handleClear}>
+            Clear
+          </button>
+          <button className="btn-primary" type="button" onClick={handleAdvancedSearch}>
+            Advanced Search
+          </button>
         </div>
       </div>
 
-      {/* BASIC SEARCH RESULT (single user) */}
-      {user && !loading && !error && (
-        <div className="mt-4 bg-white shadow rounded-xl p-4 border flex gap-4 items-center">
-          <img
-            src={user.avatar_url}
-            alt={`${user.login} avatar`}
-            className="w-20 h-20 rounded-full border"
-          />
-          <div>
-            <h3 className="text-lg font-semibold">{user.name ? user.name : user.login}</h3>
-            <p className="text-gray-600">@{user.login}</p>
-            <a
-              className="text-blue-600 underline"
-              href={user.html_url}
-              target="_blank"
-              rel="noreferrer"
-            >
-              View GitHub Profile
-            </a>
+      {/* Status */}
+      <div className="mt-6">
+        {loading && (
+          <p className="rounded-lg bg-slate-100 px-3 py-2 text-slate-700">
+            Loading...
+          </p>
+        )}
+
+        {!loading && error && (
+          <p className="rounded-lg bg-red-50 px-3 py-2 text-red-700">
+            {error}
+          </p>
+        )}
+      </div>
+
+      {/* Results */}
+      {!loading && !error && user && (
+        <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4">
+          <div className="flex items-center gap-4">
+            <img
+              src={user.avatar_url}
+              alt={user.login}
+              className="h-16 w-16 rounded-full border border-slate-200"
+            />
+            <div className="min-w-0">
+              <p className="text-lg font-semibold truncate">
+                {user.name || user.login}
+              </p>
+              <a
+                className="text-sm text-slate-600 underline underline-offset-4 hover:text-slate-900"
+                href={user.html_url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                View GitHub Profile
+              </a>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ADVANCED SEARCH RESULTS (list) */}
-      {users.length > 0 && !loading && !error && (
-        <div className="mt-4 space-y-3">
-          {users.map((u) => (
-            <div
-              key={u.id || u.login}
-              className="bg-white shadow rounded-xl p-4 border flex gap-4 items-center"
-            >
-              <img
-                src={u.avatar_url}
-                alt={`${u.login} avatar`}
-                className="w-16 h-16 rounded-full border"
-              />
-              <div className="flex-1">
-                <h3 className="font-semibold">{u.name ? u.name : u.login}</h3>
-                <p className="text-gray-600">@{u.login}</p>
-                <p className="text-sm text-gray-700">
-                  Location: {u.location ? u.location : "N/A"} • Public repos:{" "}
-                  {typeof u.public_repos === "number" ? u.public_repos : "N/A"}
-                </p>
-              </div>
-              <a
-                className="text-blue-600 underline"
-                href={u.html_url}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Profile
-              </a>
-            </div>
-          ))}
+      {!loading && !error && users.length > 0 && (
+        <div className="mt-6">
+          <p className="mb-3 text-sm text-slate-600">
+            Results: <span className="font-semibold">{users.length}</span>
+          </p>
 
-          {hasMore && (
-            <button
-              onClick={handleLoadMore}
-              className="w-full px-4 py-2 rounded-lg bg-gray-900 text-white hover:opacity-90"
-              type="button"
-              disabled={loading}
-            >
-              {loading ? "Loading..." : "Load more"}
-            </button>
-          )}
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {users.map((u) => (
+              <li key={u.id} className="rounded-xl border border-slate-200 bg-white p-4">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={u.avatar_url}
+                    alt={u.login}
+                    className="h-12 w-12 rounded-full border border-slate-200"
+                  />
+                  <div className="min-w-0">
+                    <p className="font-semibold truncate">{u.login}</p>
+                    <a
+                      className="text-sm text-slate-600 underline underline-offset-4 hover:text-slate-900"
+                      href={u.html_url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Open profile
+                    </a>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
-    </div>
+    </section>
   );
 }
