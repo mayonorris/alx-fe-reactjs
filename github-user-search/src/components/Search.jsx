@@ -172,7 +172,7 @@ export default function Search() {
         <div className="mt-4">
           {loading && <p className="text-gray-600">Loading...</p>}
           {error && !loading && (
-            <p className="text-red-600">Looks like we cant find the user</p>
+            <p className="text-red-600">Looks like we can't find the user</p>
           )}
         </div>
       </div>
