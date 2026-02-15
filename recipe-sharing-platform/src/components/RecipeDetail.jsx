@@ -1,11 +1,18 @@
 import { useParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import recipesData from "../data.json";
 
 function RecipeDetail() {
   const { id } = useParams();
 
-  // Convert id from URL to number to match JSON ids
-  const recipe = recipesData.find((r) => String(r.id) === String(id));
+  const [recipe, setRecipe] = useState(null);
+
+  useEffect(() => {
+    const foundRecipe = recipesData.find(
+      (r) => String(r.id) === String(id)
+    );
+    setRecipe(foundRecipe);
+  }, [id]);
 
   if (!recipe) {
     return (
@@ -22,7 +29,7 @@ function RecipeDetail() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-3xl mx-auto bg-white rounded-lg shadow overflow-hidden">
+      <div className="max-w-3xl mx-auto bg-white rounded-lg shadow hover:shadow-xl transition duration-300 overflow-hidden">
         <img
           src={recipe.image}
           alt={recipe.title}
